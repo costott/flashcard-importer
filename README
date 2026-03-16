@@ -1,0 +1,3 @@
+# How to Run
+
+`python main.py [DOCUMENT ID portion of google docs URL]`
