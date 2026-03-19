@@ -52,8 +52,15 @@ def main():
         title = document.get('title')
         with open(f"{title}.txt", "w+", encoding="utf-8") as f:
             output = ""
+            heading_label = ""
 
             for content in document.get('body').get('content'):
+                if content.get('paragraph'):
+                    elements = content.get('paragraph').get('elements')
+                    if "heading" in content.get('paragraph').get('paragraphStyle').get('namedStyleType').lower():
+                        heading_title = elements[0].get('textRun').get('content').strip().replace(" ", "_")
+                        heading_label = heading_title
+                
                 if not content.get('table'):
                     continue
 
@@ -93,10 +100,14 @@ def main():
 
                         cell_text = "\"" + cell_text + "\";"
                         if (i % 2 != 0):
+                            if heading_label:
+                                cell_text += heading_label
                             cell_text += "\n"
                         output += cell_text
 
             f.write(output)
+        
+        print(f"Written to {title}.txt")
 
     except HttpError as err:
         print(err)
