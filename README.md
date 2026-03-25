@@ -1,0 +1,5 @@
+# How to Run
+
+`python main.py [DOCUMENT ID portion of google docs URL]`
+
+Remember to delete token.json if the code isn't working, and that you have credentials.json from me.
