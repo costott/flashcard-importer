@@ -21,9 +21,6 @@ DOCUMENT_ID = sys.argv[1]
 
 
 def main():
-    """Shows basic usage of the Docs API.
-    Prints the title of a sample document.
-    """
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -42,14 +39,19 @@ def main():
         # Save the credentials for the next run
         with open("token.json", "w") as token:
             token.write(creds.to_json())
+    
+    print("Credentials obtained successfully.\nFetching document...")
 
     try:
         service: Resource = build("docs", "v1", credentials=creds)
 
         # Retrieve the documents contents from the Docs service.
         document = service.documents().get(documentId=DOCUMENT_ID).execute()
-
+        
         title = document.get('title')
+        
+        print(f"Reading document: {title} ...")
+        
         with open(f"{title}.txt", "w+", encoding="utf-8") as f:
             output = ""
             heading_label = ""
@@ -79,13 +81,13 @@ def main():
                                 text_run = element.get('textRun')
 
                                 final_text: str = text_run.get('content')
-
+                                
                                 final_text = final_text.replace(
                                     "<", "\\( \\lt \\)")
                                 final_text = final_text.replace(
                                     ">", "\\( \\gt \\)")
-                                final_text = final_text.replace(
-                                    "&", "\\( \\& \\)")
+                                # final_text = final_text.replace(
+                                #     "&", "\\( \\& \\)")
 
                                 final_text = final_text.replace("\n", "<br>")
 
