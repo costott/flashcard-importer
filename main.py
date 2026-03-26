@@ -3,6 +3,7 @@ import sys
 import hashlib
 import mimetypes
 from pathlib import Path
+from urllib.parse import urlparse
 import re
 
 import requests
@@ -66,6 +67,15 @@ def main():
         # Helper: download image and return filename (relative)
         def download_image(url: str, prefix: str, counter: int) -> str:
             print(f"Downloading image: {url}")
+
+            # Create a deterministic name based on the URL so we can reuse cached files
+            url_hash = hashlib.sha1(url.encode("utf-8")).hexdigest()
+            # If a cached file exists for this url_hash, return it
+            existing = list(media_dir.glob(f"{prefix}_{url_hash}*"))
+            if existing:
+                print(f"Using cached image: {existing[0]}")
+                return str(existing[0])
+
             try:
                 resp = requests.get(url, stream=True, timeout=20)
                 resp.raise_for_status()
@@ -77,9 +87,12 @@ def main():
             ext = mimetypes.guess_extension(content_type.split(";")[0].strip()) or ""
             # fallback
             if not ext:
-                ext = ".jpg"
+                # try to preserve original filename extension if present in URL
+                parsed = urlparse(url)
+                possible = Path(parsed.path).suffix
+                ext = possible if possible else ".jpg"
 
-            filename = f"{prefix}_{counter}{ext}"
+            filename = f"{prefix}_{url_hash}{ext}"
             filepath = media_dir / filename
             with open(filepath, "wb") as fh:
                 for chunk in resp.iter_content(1024):
@@ -151,8 +164,8 @@ def main():
 
                     # If generating an apkg, remove any line that contains only the author's [image] placeholder
                     if USE_GENANKI:
-                        # Remove patterns like "<br>[image]<br>", "[image]<br>", or "<br>[image]"
-                        cell_html = re.sub(r'(<br>\s*)?\[image\](\s*<br>)?', '', cell_html)
+                        # Remove "<br>[image]
+                        cell_html = re.sub(r'(<br>\s*)?\[image\]', '', cell_html)
                         # Also remove any leftover standalone [image]
                         cell_html = cell_html.replace("[image]", "")
                     cell_texts.append(cell_html)
